@@ -15,7 +15,8 @@ short getScore(char const* line)
     short attempts = 0;
     short c;
     short temp;
-    for (size_t i = 0; frames < 10; i += 2)
+    short s;
+    for (short i = 0; frames < 10; i += 2)
     {
         // this value
         c = valueMap[line[i]];
@@ -28,11 +29,12 @@ short getScore(char const* line)
         // look ahead by 2
         bonusMap['X'] = bonusMap['/'] + valueMap[line[i + 4]];
 
-        score += c + bonusMap[line[i]];
+        score += c;
+        score += bonusMap[line[i]];
 
         valueMap['/'] = temp;
 
-        short s = ((line[i] == '/') || (line[i] == 'X'));
+        s = ((line[i] == '/') || (line[i] == 'X'));
         frames += (s | (++attempts == 2)) & 0x1;
         attempts = !((attempts & 0x2) | s);
     }
