@@ -25,8 +25,7 @@ int main(int argc, const char *argv[])
             bonusMap['X' - '/'] = bonusMap[0] + valueMap[line[4] - '/'];
             score += c + bonusMap[*line - '/'];
             valueMap[0] = 10 - c;
-            ++attempts;
-            attempts = (attempts != 2);
+            attempts = (++attempts != 2);
             attempts &= (*line != 'X');
             attempts &= (*line != '/');
             frames += !attempts;
