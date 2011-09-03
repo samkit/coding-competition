@@ -1,22 +1,11 @@
 // Source: http://www.gild.com/challenges/details/235
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <cstring>
+// Code: https://github.com/samjam86/coding-competition/blob/master/Gild/2011/August/BowlingScoreCalculation/bowling.cpp
+#include <cstdio>
 
-static short valueMap['Z'] = { 0x0 };
-static short bonusMap['Z'] = { 0x0 };
-
-short getScore(char const* line)
+short getScore(char const* line, short* valueMap, short* bonusMap)
 {
     short score = 0;
-    short frames = 0;
-    short attempts = 0;
-    short c;
-    short temp;
-    short s;
-    for (short i = 0; frames < 10; i += 2)
+    for (short i = 0, frames = 0, attempts = 0, temp = -1, c = -1; frames < 10; i += 2)
     {
         // this value
         c = valueMap[line[i]];
@@ -29,12 +18,11 @@ short getScore(char const* line)
         // look ahead by 2
         bonusMap['X'] = bonusMap['/'] + valueMap[line[i + 4]];
 
-        score += c;
-        score += bonusMap[line[i]];
+        score += c + bonusMap[line[i]];
 
         valueMap['/'] = temp;
 
-        s = ((line[i] == '/') || (line[i] == 'X'));
+        short s = ((line[i] == '/') || (line[i] == 'X'));
         frames += (s | (++attempts == 2)) & 0x1;
         attempts = !((attempts & 0x2) | s);
     }
@@ -44,11 +32,8 @@ short getScore(char const* line)
 
 int main(int argc, const char *argv[])
 {
-    if (argc != 2)
-    {
-        std::cout << "Usage: " << argv[0] << " <input_file>" << std::endl;
-        return 1;
-    }
+    short valueMap['Z'] = { 0x0 };
+    short bonusMap['Z'] = { 0x0 };
 
     for (short i = 0; i < 10; ++i)
     {
@@ -58,25 +43,16 @@ int main(int argc, const char *argv[])
     valueMap['A'] = 0;
 
     char const* filename = argv[1];
-    std::ifstream inFile(filename);
 
-    char line[100];
-    while (inFile.getline(line, sizeof(line)) || line[0])
+    FILE* inFile = std::fopen(filename, "r");
+
+    char* line = 0;
+    for (size_t len, readCount; (readCount = getline(&line, &len, inFile)) != -1 && readCount > 1;)
     {
-        if (!line[0])
-            continue;
-
-        size_t len = inFile.gcount();
-
         line[len + 1] = 'A';
         line[len + 3] = 'A';
-
-        std::cout << getScore(line) << '\n';
-
-        line[0] = 0;
+        printf("%d\n", getScore(line, valueMap, bonusMap));
     }
 
-    inFile.close();
-
-    return 0;
+    fclose(inFile);
 }
