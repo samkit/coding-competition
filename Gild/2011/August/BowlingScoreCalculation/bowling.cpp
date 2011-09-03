@@ -20,11 +20,16 @@ int main(int argc, const char *argv[])
         for (short frames = 0, attempts = 0, c; frames < 10; line += 2)
         {
             c = valueMap[*line - '/'];
-            valueMap[0] = 10 - (bonusMap[0] = valueMap[line[2] - '/']);
+            bonusMap[0] = valueMap[line[2] - '/'];
+            valueMap[0] = 10 - bonusMap[0];
             bonusMap['X' - '/'] = bonusMap[0] + valueMap[line[4] - '/'];
             score += c + bonusMap[*line - '/'];
             valueMap[0] = 10 - c;
-            frames += !(attempts = !((++attempts == 2) | ((*line == 'X') || (*line == '/'))));
+            ++attempts;
+            attempts = (attempts != 2);
+            attempts &= (*line != 'X');
+            attempts &= (*line != '/');
+            frames += !attempts;
         }
         printf("%d\n", score);
     }
