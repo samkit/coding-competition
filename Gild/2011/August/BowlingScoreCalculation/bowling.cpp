@@ -5,15 +5,14 @@
 
 int main(int argc, const char *argv[])
 {
-    short valueMap['Z' - '/'] = { 0x0 }, bonusMap['Z' - '/'] = { 0x0 };
-
-    for (short i = 0; i < 10; ++i) valueMap[i + '0' - '/'] = i;
+    short valueMap['Z' - '/'] = { 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 }, bonusMap['Z' - '/'] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     valueMap['X' - '/'] = 10;
 
     FILE* inFile = fopen(argv[1], "r");
 
     char* readLine = (char*)malloc(200);
-    for (size_t readCount, score = 0, len = 200; (readCount = getline(&readLine, &len, inFile)) != -1 && readCount > 1; score = 0)
+    short readCount, score;
+    for (size_t len = 200; (readCount = getline(&readLine, &len, inFile)) > 1; score = 0)
     {
         readLine[readCount + 1] = readLine[readCount + 3] = 'A';
 
@@ -21,13 +20,11 @@ int main(int argc, const char *argv[])
         for (short frames = 0, attempts = 0, c; frames < 10; line += 2)
         {
             c = valueMap[*line - '/'];
-            valueMap['/' - '/'] = 10 - (bonusMap['/' - '/'] = valueMap[line[2] - '/']);
-            bonusMap['X' - '/'] = bonusMap['/' - '/'] + valueMap[line[4] - '/'];
+            valueMap[0] = 10 - (bonusMap[0] = valueMap[line[2] - '/']);
+            bonusMap['X' - '/'] = bonusMap[0] + valueMap[line[4] - '/'];
             score += c + bonusMap[*line - '/'];
-            valueMap['/' - '/'] = 10 - c;
-            bool f = ((*line == 'X') || (*line == '/'));
-            frames += (f | (++attempts == 2));
-            attempts = !((attempts == 2) | f);
+            valueMap[0] = 10 - c;
+            frames += !(attempts = !((++attempts == 2) | ((*line == 'X') || (*line == '/'))));
         }
         printf("%d\n", score);
     }
