@@ -5,7 +5,7 @@
 #include <cstring>
 #include <tuple>
 #include <set>
-#include <map>
+#include <unordered_map>
 
 using namespace std;
 
@@ -13,7 +13,7 @@ typedef pair<unsigned long long, unsigned long long> Position;
 typedef vector<Position> Positions;
 typedef vector<Positions> WordPositions;
 typedef tuple<unsigned long long, unsigned long long, unsigned long> Minima;
-typedef map<unsigned long long, unsigned long long> WordCounts;
+typedef unordered_map<unsigned long long, unsigned long long> WordCounts;
 
 Minima minima(-1, 0, 0);
 WordPositions wordPositions;
@@ -40,7 +40,6 @@ void search_pattern(std::string const& line, std::string const& word, Positions&
     }
 }
 
-/*
 inline void get_smallest_para(unsigned long long minimum, unsigned long long maximum, WordCounts const& wordCounts, unsigned long long level)
 {
     if (level == wordPositions.size())
@@ -71,20 +70,6 @@ inline void get_smallest_para(unsigned long long minimum, unsigned long long max
         get_smallest_para(localMinimum, localMaximum, wordCounts, level + 1);
     }
 }
-*/
-
-void get_smallest_para(unsigned long long minimum, unsigned long long maximum, WordCounts const& wordCounts, unsigned long long level)
-{
-for (unsigned long long recurse = 0; recurse < wordPositions.size(); ++recurse)
-{
-    for (unsigned long long index = 0; index < wordPositions[level].size(); ++index)
-    {
-        for (unsigned long long level = recurse + 1; level < wordPositions.size(); ++level)
-        {
-        }
-    }
-}
-}
 
 int main()
 {
@@ -100,6 +85,8 @@ int main()
     }
 
     WordCounts wordCounts;
+    wordCounts.max_load_factor(1);
+
     unsigned wordCount = 0;
     for (size_t i = 0; i < line.length(); ++i)
     {
@@ -131,6 +118,10 @@ int main()
 
         wordPositions.push_back(std::move(positions));
     }
+
+    sort(wordPositions.begin(), wordPositions.end(), [](Positions const& lhs, Positions const& rhs) {
+            return lhs.size() < rhs.size();
+    });
 
     get_smallest_para(-1, 0, wordCounts, 0);
 
