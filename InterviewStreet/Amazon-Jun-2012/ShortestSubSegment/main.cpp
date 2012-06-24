@@ -15,6 +15,9 @@ typedef vector<Positions> WordPositions;
 typedef tuple<unsigned long long, unsigned long long, unsigned long> Minima;
 typedef map<unsigned long long, unsigned long long> WordCounts;
 
+Minima minima(-1, 0, 0);
+WordPositions wordPositions;
+
 void search_pattern(std::string const& line, std::string const& word, Positions& positions)
 {
     char const* start = line.c_str();
@@ -37,8 +40,8 @@ void search_pattern(std::string const& line, std::string const& word, Positions&
     }
 }
 
-inline void get_smallest_para(std::string const& line, WordPositions const& wordPositions,
-        Minima& minima, unsigned long long minimum, unsigned long long maximum, WordCounts const& wordCounts, unsigned long long level)
+/*
+inline void get_smallest_para(unsigned long long minimum, unsigned long long maximum, WordCounts const& wordCounts, unsigned long long level)
 {
     if (level == wordPositions.size())
     {
@@ -65,8 +68,22 @@ inline void get_smallest_para(std::string const& line, WordPositions const& word
             continue;
         }
 
-        get_smallest_para(line, wordPositions, minima, localMinimum, localMaximum, wordCounts, level + 1);
+        get_smallest_para(localMinimum, localMaximum, wordCounts, level + 1);
     }
+}
+*/
+
+void get_smallest_para(unsigned long long minimum, unsigned long long maximum, WordCounts const& wordCounts, unsigned long long level)
+{
+for (unsigned long long recurse = 0; recurse < wordPositions.size(); ++recurse)
+{
+    for (unsigned long long index = 0; index < wordPositions[level].size(); ++index)
+    {
+        for (unsigned long long level = recurse + 1; level < wordPositions.size(); ++level)
+        {
+        }
+    }
+}
 }
 
 int main()
@@ -98,8 +115,6 @@ int main()
     unsigned long long K = 0;
     cin >> K;
 
-    WordPositions wordPositions;
-
     while (K--)
     {
         std::string word;
@@ -117,8 +132,7 @@ int main()
         wordPositions.push_back(std::move(positions));
     }
 
-    Minima minima(-1, 0, 0);
-    get_smallest_para(line, wordPositions, minima, -1, 0, wordCounts, 0);
+    get_smallest_para(-1, 0, wordCounts, 0);
 
     char const* start = line.c_str() + get<1>(minima);
     line[get<2>(minima)] = 0;
