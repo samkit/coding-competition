@@ -1,7 +1,7 @@
 #include <iostream>
 #include <algorithm>
 #include <sstream>
-#include <deque>
+#include <vector>
 #include <cstring>
 #include <tuple>
 #include <set>
@@ -10,10 +10,11 @@
 using namespace std;
 
 typedef pair<unsigned long long, unsigned long long> Position;
-typedef deque<Position> Positions;
-typedef deque<Positions> WordPositions;
+typedef vector<Position> Positions;
+typedef vector<Positions> WordPositions;
 typedef tuple<unsigned long long, unsigned long long, unsigned long, bool> Minima;
 typedef unordered_map<unsigned long long, unsigned long long> WordCounts;
+typedef vector<unsigned long long> UsedIndexes;
 
 Minima minima(-1, 0, 0, false);
 void search_pattern(std::string const& line, std::string const& word, Positions& positions)
@@ -39,55 +40,53 @@ void search_pattern(std::string const& line, std::string const& word, Positions&
 }
 
 inline void get_smallest_para(std::string const& line, WordPositions& wordPositions, unsigned long long minimum, unsigned long long maximum,
-        WordCounts const& wordCounts, unsigned long long level)
+        WordCounts const& wordCounts, unsigned long long level, UsedIndexes& usedIndexes)
 {
     if (level == wordPositions.size())
     {
         const unsigned long long wordCount = wordCounts.find(maximum)->second - wordCounts.find(minimum)->second + 1;
         if (get<0>(minima) > wordCount)
         {
-//          cout << "set ---- " << minimum << " " << maximum << " " << get<0>(minima) << "->" << wordCount << endl;
+//          cout << "set ---- " << minimum << " " << maximum << " " << get<0>(minima) << "->" << wordCount;
             get<0>(minima) = wordCount;
             get<1>(minima) = minimum;
             get<2>(minima) = maximum;
             get<3>(minima) = true;
+
+//          cout << " [";
+//          for_each(usedIndexes.begin(), usedIndexes.end(), [] (unsigned long long i) { cout << i << " "; });
+//          cout << "]" << endl;
         }
         return;
     }
 
-//  sort(wordPositions[level].begin(), wordPositions[level].end(), [minimum, maximum, &wordCounts] (Position const& lhs, Position const& rhs) {
-//          const unsigned long long wordCount_1 = wordCounts.find(std::max(maximum, lhs.second + 1))->second - wordCounts.find(std::min(minimum, lhs.first))->second + 1;
-//          const unsigned long long wordCount_2 = wordCounts.find(std::max(maximum, rhs.second + 1))->second - wordCounts.find(std::min(minimum, rhs.first))->second + 1;
-//          return wordCount_1 < wordCount_2;
-//  });
-
     bool createdMinima = false;
-    for (unsigned long long index = 0; index < wordPositions[level].size(); ++index)
+    for (unsigned long long index = usedIndexes[level]; index < wordPositions[level].size(); ++index)
     {
         Position const& position = wordPositions[level][index];
 
-        if (!createdMinima && get<3>(minima) && get<1>(minima) < position.first)
+        if (!createdMinima && get<3>(minima) && get<1>(minima) <= position.first)
         {
-//          cout << get<1>(minima) << " " << position.first << endl;
+//          cout << "skip " << get<1>(minima) << " < " << position.first << " " << level << endl;
             return;
         }
+        if (createdMinima) usedIndexes[level] = index;
+//      cout << "consider [" << index << "]@[" << level << "]" << endl;
 
         const unsigned long long localMinimum = std::min(minimum, position.first);
         const unsigned long long localMaximum = std::max(maximum, position.second + 1);
 
-//      const unsigned long long wordCount = wordCounts.find(localMaximum)->second - wordCounts.find(localMinimum)->second + 1;
-//      if (get<0>(minima) <= wordCount)
-//      {
-//          continue;
-//      }
-
         // invalidate the minima
+        if (get<3>(minima))
+        {
+//          cout << "=====" << position.first << " " << localMinimum << " " << level << endl;
+        }
         get<3>(minima) = false;
 
-//      cout << "=====" << localMinimum << " " << localMaximum << " " << level << endl;
-        get_smallest_para(line, wordPositions, localMinimum, localMaximum, wordCounts, level + 1);
+        get_smallest_para(line, wordPositions, localMinimum, localMaximum, wordCounts, level + 1, usedIndexes);
         createdMinima = get<1>(minima) == position.first;
 //      cout << "check----" << get<1>(minima) << " " << position.first << " " << level << " " << createdMinima << endl;
+//      cout << "check----" << get<1>(minima) << " " << position.first << " " << index << " " << level << " " << createdMinima << endl;
     }
 }
 
@@ -141,9 +140,14 @@ int main()
         wordPositions.push_back(std::move(positions));
     }
 
-//  sort(wordPositions.begin(), wordPositions.end(), [](Positions const& lhs, Positions const& rhs) { return lhs.size() < rhs.size(); });
+//  sort(wordPositions.begin(), wordPositions.end(), [](Positions const& lhs, Positions const& rhs) { return lhs.size() > rhs.size(); });
 
-    get_smallest_para(line, wordPositions, -1, 0, wordCounts, 0);
+    UsedIndexes usedIndexes(wordPositions.size(), 0);
+    get_smallest_para(line, wordPositions, -1, 0, wordCounts, 0, usedIndexes);
+
+//  cout << "left [";
+//  for_each(usedIndexes.begin(), usedIndexes.end(), [] (unsigned long long i) { cout << i << " "; });
+//  cout << "]" << endl;
 
     char const* start = line.c_str() + get<1>(minima);
     line[get<2>(minima)] = 0;
