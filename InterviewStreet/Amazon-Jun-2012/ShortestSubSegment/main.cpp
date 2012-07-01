@@ -9,7 +9,6 @@
 
 using namespace std;
 
-//typedef tuple<size_t, size_t, size_t> Position;
 struct Position
 {
     size_t start;
@@ -27,7 +26,7 @@ const int COUNT = 0;
 const int MIN = 1;
 const int MAX = 2;
 
-bool operator< (Position const& lhs, Position const& rhs)
+inline bool operator< (Position const& lhs, Position const& rhs)
 {
     return lhs.count < rhs.count;
 }
