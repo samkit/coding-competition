@@ -53,11 +53,14 @@ inline void get_smallest_para(std::string const& line, WordPositions const& word
 {
     if (level == wordPositions.size())
     {
+for (size_t i = 0; i < level; ++i) cout << "\t";
         const unsigned long long wordCount = get_words_between(wordCounts, minimum, maximum);
         if (get<COUNT>(minima) > wordCount)
         {
             minima = tie(wordCount, minimum, maximum);
+cout << "set " << minimum << "-" << maximum << endl;
         }
+else cout << "try " << get<MIN>(minima) << "-" << get<MAX>(minima) << "[" << get<COUNT>(minima) << "]" << " " << minimum << "-" << maximum << "[" << wordCount << "]" << endl;
         return;
     }
 
@@ -68,17 +71,30 @@ inline void get_smallest_para(std::string const& line, WordPositions const& word
         const unsigned long long localMinimum = std::min(minimum, position.first);
         const unsigned long long localMaximum = std::max(maximum, position.second + 1);
 
+for (size_t i = 0; i < level; ++i) cout << "\t";
+cout << position.first << "-" << position.second << (createdMinima ? "+" : "");
         if (!createdMinima)
         {
             if (localMinimum <= get<MIN>(minima) && get<MAX>(minima) <= localMaximum)
             {
+cout << " " << minimum << "-" << maximum << " " << localMinimum << "-" << localMaximum << " (skip_2)" << endl;
                 return;
             }
             if (get<COUNT>(minima) <= get_words_between(wordCounts, localMinimum, localMaximum))
             {
-                return;
+cout << " " << get<MIN>(minima) << "-" << get<MAX>(minima) << "[" << get<COUNT>(minima) << "] " << localMinimum << "-" << localMaximum << "[" << get_words_between(wordCounts, localMinimum, localMaximum) << "] (skip_3)" << endl;
+                if (localMinimum != position.first)
+                {
+                    return;
+                }
+                else
+                {
+                    continue;
+                }
             }
         }
+cout << endl;
+
         usedIndexes[level] = index;
         get_smallest_para(line, wordPositions, minima, localMinimum, localMaximum, wordCounts, level + 1, usedIndexes);
         createdMinima = get<MIN>(minima) == position.first;
