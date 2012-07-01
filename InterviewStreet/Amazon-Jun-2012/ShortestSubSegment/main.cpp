@@ -9,10 +9,17 @@
 
 using namespace std;
 
-typedef pair<unsigned long long, unsigned long long> Position;
+//typedef tuple<unsigned long long, unsigned long long, unsigned long long> Position;
+struct Position
+{
+    unsigned long long start;
+    unsigned long long end;
+    unsigned long long count;
+};
+
 typedef vector<Position> Positions;
 typedef vector<Positions> WordPositions;
-typedef tuple<unsigned long long, unsigned long long, unsigned long> Minima;
+typedef tuple<unsigned long long, Position, Position> Minima;
 typedef unordered_map<unsigned long long, unsigned long long> WordCounts;
 typedef vector<unsigned long long> UsedIndexes;
 
@@ -20,7 +27,17 @@ const int COUNT = 0;
 const int MIN = 1;
 const int MAX = 2;
 
-void search_pattern(std::string const& line, std::string const& word, Positions& positions)
+bool operator< (Position const& lhs, Position const& rhs)
+{
+    return lhs.count < rhs.count;
+}
+
+inline unsigned long long get_words_between(WordCounts const& wordCounts, unsigned long long minimum, unsigned long long maximum)
+{
+    return wordCounts.find(maximum)->second - wordCounts.find(minimum)->second + 1;
+}
+
+void search_pattern(std::string const& line, std::string const& word, WordCounts const& wordCounts, Positions& positions)
 {
     char const* start = line.c_str();
     char const* end = start + line.length();
@@ -31,8 +48,10 @@ void search_pattern(std::string const& line, std::string const& word, Positions&
             &&
             (index + word.length() >= end || isspace(index[word.length()])))
         {
-            int startIndex = index - start;
-            positions.push_back({startIndex, startIndex + word.length()});
+            unsigned long long startIndex = index - start;
+            unsigned long long endIndex = startIndex + word.length();
+            unsigned long long wordCount = get_words_between(wordCounts, 0, endIndex + 1);
+            positions.push_back({startIndex, endIndex, wordCount});
             index += word.length();
         }
         else
@@ -42,25 +61,17 @@ void search_pattern(std::string const& line, std::string const& word, Positions&
     }
 }
 
-unsigned long long get_words_between(WordCounts const& wordCounts, unsigned long long minimum, unsigned long long maximum)
-{
-    return wordCounts.find(maximum)->second - wordCounts.find(minimum)->second + 1;
-}
-
 inline void get_smallest_para(std::string const& line, WordPositions const& wordPositions, Minima& minima,
-        unsigned long long minimum, unsigned long long maximum, WordCounts const& wordCounts,
+        Position minimum, Position maximum, WordCounts const& wordCounts,
         unsigned long long level, UsedIndexes& usedIndexes)
 {
     if (level == wordPositions.size())
     {
-for (size_t i = 0; i < level; ++i) cout << "\t";
-        const unsigned long long wordCount = get_words_between(wordCounts, minimum, maximum);
+        const unsigned long long wordCount = maximum.count - minimum.count + 1; //get_words_between(wordCounts, minimum, maximum);
         if (get<COUNT>(minima) > wordCount)
         {
             minima = tie(wordCount, minimum, maximum);
-cout << "set " << minimum << "-" << maximum << endl;
         }
-else cout << "try " << get<MIN>(minima) << "-" << get<MAX>(minima) << "[" << get<COUNT>(minima) << "]" << " " << minimum << "-" << maximum << "[" << wordCount << "]" << endl;
         return;
     }
 
@@ -68,36 +79,29 @@ else cout << "try " << get<MIN>(minima) << "-" << get<MAX>(minima) << "[" << get
     for (unsigned long long index = usedIndexes[level]; index < wordPositions[level].size(); ++index)
     {
         Position const& position = wordPositions[level][index];
-        const unsigned long long localMinimum = std::min(minimum, position.first);
-        const unsigned long long localMaximum = std::max(maximum, position.second + 1);
-
-for (size_t i = 0; i < level; ++i) cout << "\t";
-cout << position.first << "-" << position.second << (createdMinima ? "+" : "");
-        if (!createdMinima)
+        Position const& localMinimum = std::min(minimum, position);
+        Position const& localMaximum = std::max(maximum, position);
+        if (!createdMinima && localMinimum.count <= get<MIN>(minima).count && get<MAX>(minima).count <= localMaximum.count)
         {
-            if (localMinimum <= get<MIN>(minima) && get<MAX>(minima) <= localMaximum)
+            return;
+        }
+
+        if (get<COUNT>(minima) <= localMaximum.count - localMinimum.count) //get_words_between(wordCounts, localMinimum, localMaximum))
+        {
+            if (localMinimum.count != position.count)
             {
-cout << " " << minimum << "-" << maximum << " " << localMinimum << "-" << localMaximum << " (skip_2)" << endl;
                 return;
             }
-            if (get<COUNT>(minima) <= get_words_between(wordCounts, localMinimum, localMaximum))
+            else
             {
-cout << " " << get<MIN>(minima) << "-" << get<MAX>(minima) << "[" << get<COUNT>(minima) << "] " << localMinimum << "-" << localMaximum << "[" << get_words_between(wordCounts, localMinimum, localMaximum) << "] (skip_3)" << endl;
-                if (localMinimum != position.first)
-                {
-                    return;
-                }
-                else
-                {
-                    continue;
-                }
+                usedIndexes[level] = index;
+                continue;
             }
         }
-cout << endl;
 
         usedIndexes[level] = index;
         get_smallest_para(line, wordPositions, minima, localMinimum, localMaximum, wordCounts, level + 1, usedIndexes);
-        createdMinima = get<MIN>(minima) == position.first;
+        createdMinima = get<MIN>(minima).count == position.count;
     }
 }
 
@@ -129,7 +133,7 @@ int main(int argc, char* argv[])
         }
     }
     wordCounts[0] = 0;
-    wordCounts[line.length() + 1] = wordCount + 1;
+    wordCounts[line.length() + 1] = ++wordCount;
 
     unsigned long long K = 0;
     cin >> K;
@@ -142,7 +146,7 @@ int main(int argc, char* argv[])
 
         cin >> word;
 
-        search_pattern(line, word, positions);
+        search_pattern(line, word, wordCounts, positions);
         if (positions.empty())
         {
             cout << "NO SUBSEGMENT FOUND" << endl;
@@ -152,12 +156,12 @@ int main(int argc, char* argv[])
         wordPositions.push_back(std::move(positions));
     }
 
-    Minima minima(-1, 0, line.length() + 1);
+    Minima minima(-1, {-1, -1, 0}, {-1, -1, wordCount});
     UsedIndexes usedIndexes(wordPositions.size(), 0);
-    get_smallest_para(line, wordPositions, minima, -1, 0, wordCounts, 0, usedIndexes);
+    get_smallest_para(line, wordPositions, minima, {-1, -1, wordCount + 1}, {-1, -1, 0}, wordCounts, 0, usedIndexes);
 
-    char const* start = line.c_str() + get<MIN>(minima);
-    line[get<MAX>(minima) - 1] = 0;
+    char const* start = line.c_str() + get<MIN>(minima).start;
+    line[get<MAX>(minima).end] = 0;
     cout << start << endl;
 
     return 0;
