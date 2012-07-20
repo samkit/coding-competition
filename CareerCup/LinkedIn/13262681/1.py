@@ -17,7 +17,7 @@ def get_matching_bracket(line, start, count):
 
 def get_one_node(line, start):
     if start >= len(line):
-        return -1, -1
+        return -1, None
 
     if line[start] == '(':
         end = get_matching_bracket(line, start, 0)
@@ -40,7 +40,7 @@ def get_left_right(line):
     if rightEnd is None:
         return -1, -1
 
-    if rightEnd < len(line) - 1:
+    if rightEnd <= len(line) - 1:
         return -1, -1
 
     return left, right
@@ -50,6 +50,9 @@ def get_left_right(line):
 def get_depth(line):
     if line[0] == '(':
         end = get_matching_bracket(line, 0, 0)
+        if end == -1:
+            return -1
+
         left, right = get_left_right(line[1:end])
         if -1 in (left, right):
             return -1
@@ -62,9 +65,10 @@ def get_depth(line):
 
         return 1 + max(get_depth(left), get_depth(right))
 
-    elif line[0] == '0':
-        return 0
     else:
-        return 1
+        return 0
 
-print get_depth(sys.argv[1])
+depth = get_depth(sys.argv[1])
+if depth != -1:
+    depth -= 1
+print depth
