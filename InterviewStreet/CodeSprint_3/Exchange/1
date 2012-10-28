@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "./main_2.py", line 44, in <module>
+    connected = get_connected_sets(rules)
+  File "./main_2.py", line 26, in get_connected_sets
+    output.union(extract_connected(rules, i, output))
+TypeError: 'NoneType' object is not iterable
