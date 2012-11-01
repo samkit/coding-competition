@@ -2,6 +2,10 @@
 #include <iostream>
 #include <unordered_map>
 #include <unordered_set>
+#include <deque>
+#include <array>
+#include <list>
+#include <map>
 
 using namespace std;
 
@@ -13,56 +17,83 @@ int main()
     data_type T;
     data_type N, M, K;
 
-    cin >> T;
+    vector<vector<data_type>> grid;
+    vector<floating_type> probabilities;
+    vector<floating_type> population;
 
+    cin >> T;
     while (T--)
     {
         cin >> N >> M >> K;
 
-        unordered_map<data_type, unordered_set<data_type>> grid;
+        for_each(grid.begin(), grid.end(), [] (vector<data_type>& s) { s.clear(); });
+        grid.resize(N);
+        probabilities.resize(N);
+        population.resize(N);
+
         while (M--)
         {
             data_type start, end;
             cin >> start >> end;
-            grid[start].insert(end);
-            grid[end].insert(start);
+            if (!binary_search(grid[start].begin(), grid[start].end(), end))
+            {
+                auto insertPosition = upper_bound(grid[start].begin(), grid[start].end(), end);
+                grid[start].insert(insertPosition, end);
+            }
+            if (!binary_search(grid[end].begin(), grid[end].end(), start))
+            {
+                auto insertPosition = upper_bound(grid[end].begin(), grid[end].end(), start);
+                grid[end].insert(insertPosition, start);
+            }
         }
 
-        vector<floating_type> population;
-        population.resize(N);
         for (data_type i = 0; i < N; ++i)
         {
             cin >> population[i];
         }
 
-        for (data_type step = 0; step < K; ++step)
+        for (data_type step = 0, noUpdateCount = 0; step < K && noUpdateCount < 100; ++step)
         {
-            unordered_map<data_type, floating_type> probabilities;
-            for (auto const& nodeNeighbour : grid)
+            for (size_t node = 0; node < N; ++node)
             {
-                probabilities[nodeNeighbour.first] = population[nodeNeighbour.first] / nodeNeighbour.second.size();
+                probabilities[node] = population[node] / grid[node].size();
             }
 
-            for (size_t node = 0; node < population.size(); ++node)
+            bool updated = false;
+            for (size_t node = 0; node < N; ++node)
             {
 
-                population[node] = accumulate(grid[node].begin(), grid[node].end(),
+                floating_type update = accumulate(grid[node].begin(), grid[node].end(),
                             0.0,
                             [&probabilities] (floating_type const& lhs, floating_type const& rhs) {
                                 return lhs + probabilities[rhs];
                             }
                 );
+                updated = updated || (abs(population[node] - update) > 1E-6);
+                population[node] = update;
+            }
+            noUpdateCount += updated ? 0 : 1;
+        }
+
+        typedef map<floating_type, size_t> topper_map_type;
+        topper_map_type topper;
+        for (auto const& count : population)
+        {
+            ++topper[count];
+            if (topper.size() > 5)
+            {
+                topper.erase(topper.rend().base());
             }
         }
 
-        std::sort(population.begin(), population.end(), [] (floating_type const& lhs, floating_type const& rhs) {
-            return lhs > rhs;
-        });
-
-        size_t printable = std::min(size_t(5), population.size());
-        for (size_t node = 0; node < printable; ++node)
+        size_t printable = 0;
+        for (auto it = topper.rbegin(); it != topper.rend(); ++it)
         {
-            cout << (node ? " " : "") << nearbyint(population[node]);
+            for (size_t z = 0; printable < 5 && z < it->second; ++z)
+            {
+                cout << (printable ? " " : "") << nearbyint(it->first);
+                ++printable;
+            }
         }
         cout << endl;
     }
