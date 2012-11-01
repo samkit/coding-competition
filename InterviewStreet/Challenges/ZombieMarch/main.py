@@ -24,18 +24,13 @@ for t in xrange(T):
     for node in xrange(N):
         population[node] = float(inFile.readline())
 
-#   pprint(grid)
-#   pprint(population)
-
     for step in xrange(K):
         probabilities = dict()
         for node, neighbours in grid.iteritems():
             probabilities[node] = population[node] / len(neighbours)
 
-        print probabilities
         for node in xrange(N):
             population[node] = sum([ probabilities[neighbour] for neighbour in grid[node] ])
-        pprint(population)
 
     result = [ int(round(z[1])) for z in sorted(population.iteritems(), key = lambda x: x[1], reverse = True)[:5] ]
     for z in result:
